@@ -1,11 +1,15 @@
 ﻿using Expense_Tracker.Data;
+using Expense_Tracker.Data.DTOs;
 using Expense_Tracker.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 
 namespace Expense_Tracker.Controllers
 {
-    public class AuthController
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AuthController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
         private readonly IPasswordService _passwordService;
@@ -13,6 +17,29 @@ namespace Expense_Tracker.Controllers
         {
             _context = context;
             _passwordService = passwordService;
+        }
+
+        [HttpPost("Login")]
+
+        public async Task<IActionResult> Login( LoginDto dto) {
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+
+            if(user == null)
+            {
+                return Unauthorized("Invalid email or password");
+            }
+
+            var isPasswordValid = _passwordService.VerifyPassword(dto.Password, user.PasswordHash);
+
+            if (!isPasswordValid)
+            {
+                return Unauthorized("Invalid email or password");
+            }
+
+            return Ok("Login Successful");
+            
+
         }
     }
 }
