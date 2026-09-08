@@ -5,7 +5,7 @@ namespace Expense_Tracker.Data.DTOs
     public class ExpenseDto
     {
         
-        public int UserId { get; set; }
+        
 
         [Required]
         public int CategoryId { get; set; }

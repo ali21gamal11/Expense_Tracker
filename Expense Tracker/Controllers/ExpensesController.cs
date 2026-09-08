@@ -1,8 +1,11 @@
 ﻿using Expense_Tracker.Data;
 using Expense_Tracker.Data.DTOs;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 namespace Expense_Tracker.Controllers
+
 
 
 {
@@ -20,33 +23,46 @@ namespace Expense_Tracker.Controllers
 
         // GET: api/Expenses
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetExpenses()
         {
-            var expenses = await _context.Expenses
-            .Include(e => e.User)
-            .Include(e => e.Category)
-            .Select(e => new ExpenseResponseDto
-            {
-                Id = e.Id,
-                UserName = e.User.Name,
-                CategoryName = e.Category.Name,
-                Description = e.Description,
-                Amount = e.Amount,
-                Date = e.Date,
-                CreatedAt = e.CreatedAt
+            
+            var userId = int.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
-            }).ToArrayAsync();
+            var expenses = await _context.Expenses
+                .Where(e => e.UserId == userId)
+                 .Include(e => e.User)
+                .Include(e => e.Category)
+                .Select(e => new ExpenseResponseDto
+                {
+                    Id = e.Id,
+                    UserName = e.User.Name,
+                    UserId = e.UserId,
+                    CategoryId = e.CategoryId,
+                    CategoryName = e.Category.Name,
+                    Description = e.Description,
+                    Amount = e.Amount,
+                    Date = e.Date,
+                    CreatedAt = e.CreatedAt
+
+                }).ToArrayAsync();
             return Ok(expenses);
 
         }
 
         // POST: api/Expenses
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> CreateExpense(ExpenseDto dto)
         {
+
+            var userId = int.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
             var expense = new Expense
             {
-                UserId = dto.UserId,
+                UserId = userId,
                 CategoryId = dto.CategoryId,
                 Amount = dto.Amount,
                 Description = dto.Description,
@@ -82,12 +98,16 @@ namespace Expense_Tracker.Controllers
 
         // GET: api/Expenses/{id}
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<IActionResult> GetExpense(int id)
         {
+            var userId = int.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
             var expense = await _context.Expenses
             .Include(e => e.User)
             .Include(e => e.Category)
-            .FirstOrDefaultAsync(e => e.Id == id);
+            .FirstOrDefaultAsync(e => e.Id == id && e.UserId == userId);
             if (expense == null)
             {
                 return NotFound();
@@ -110,15 +130,20 @@ namespace Expense_Tracker.Controllers
 
         // PUT: api/Expenses/{id}
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<IActionResult> UpdateExpense(int id, ExpenseDto dto)
         {
-            var expense = await _context.Expenses.FindAsync(id);
+            var userId = int.Parse(
+               User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+
+            var expense = await _context.Expenses
+                .FirstOrDefaultAsync(e => e.Id == id && e.UserId == userId);
             if (expense == null)
             {
                 return NotFound();
             }
 
-            expense.UserId = dto.UserId;
             expense.CategoryId = dto.CategoryId;
             expense.Amount = dto.Amount;
             expense.Description = dto.Description;
@@ -152,9 +177,14 @@ namespace Expense_Tracker.Controllers
 
         // DELETE: api/Expenses/{id}
         [HttpDelete("{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteExpense(int id)
         {
-            var expense = await _context.Expenses.FindAsync(id);
+            var userId = int.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            var expense = await _context.Expenses
+                .FirstOrDefaultAsync(e => e.Id == id && e.UserId == userId);
             if (expense == null)
             {
                 return NotFound();

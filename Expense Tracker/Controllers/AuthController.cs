@@ -12,11 +12,13 @@ namespace Expense_Tracker.Controllers
     public class AuthController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IJwtService _jwtService;
         private readonly IPasswordService _passwordService;
-        public AuthController(ApplicationDbContext context, IPasswordService passwordService)
+        public AuthController(ApplicationDbContext context, IPasswordService passwordService , IJwtService jwtService)
         {
             _context = context;
             _passwordService = passwordService;
+            _jwtService = jwtService;
         }
 
         [HttpPost("Login")]
@@ -37,8 +39,10 @@ namespace Expense_Tracker.Controllers
                 return Unauthorized("Invalid email or password");
             }
 
-            return Ok("Login Successful");
-            
+            var token = _jwtService.GenerateToken(user.Id, user.Email);
+
+            return Ok(token);
+
 
         }
     }
