@@ -1,12 +1,14 @@
 ﻿using Expense_Tracker.Data;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc;
 using Expense_Tracker.Data.DTOs;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Expense_Tracker.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class CategoriesController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
@@ -27,7 +29,8 @@ public class CategoriesController : ControllerBase
 
     // POST: api/Categories
     [HttpPost]
-    public async Task<IActionResult> CreateCategories(CategoryDto dto)
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> CreateCategory(CategoryDto dto)
     {
         var category = new Category
         {
@@ -42,7 +45,7 @@ public class CategoriesController : ControllerBase
 
     // GET: api/Categories/{id}
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetCategories(int id)
+    public async Task<IActionResult> GetCategory(int id)
     {
         var category= await _context.Categories.FindAsync(id);
         if(category == null)
@@ -54,7 +57,8 @@ public class CategoriesController : ControllerBase
 
     // PUT: api/Categories/{id}
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateCategories(int id,CategoryDto dto )
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UpdateCategory(int id,CategoryDto dto )
     {
         var category = await _context.Categories.FindAsync(id);
         if (category == null)
@@ -69,6 +73,7 @@ public class CategoriesController : ControllerBase
 
     // DELETE: api/Categories/{id}
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteCategory(int id)
     {
         var category = await _context.Categories.FindAsync(id);
@@ -76,7 +81,15 @@ public class CategoriesController : ControllerBase
         {
             return NotFound();
         }
-         _context.Categories.Remove(category);
+
+        var isUsed = await _context.Expenses
+            .AnyAsync(e => e.CategoryId == id);
+
+        if (isUsed)
+        {
+            return Conflict("Cannot delete a category that is used by expenses");
+        }
+        _context.Categories.Remove(category);
         await _context.SaveChangesAsync();
         return NoContent();
     }

@@ -39,7 +39,11 @@ namespace Expense_Tracker.Controllers
                 return Unauthorized("Invalid email or password");
             }
 
-            var token = _jwtService.GenerateToken(user.Id, user.Email);
+            var token = _jwtService.GenerateToken(
+                user.Id,
+                user.Email,
+                user.Role
+            );
 
             return Ok(token);
 

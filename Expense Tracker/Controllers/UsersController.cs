@@ -2,14 +2,18 @@
 using Expense_Tracker.Data.DTOs;
 using Expense_Tracker.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 namespace Expense_Tracker.Controllers
+
 
 
 {
 
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class UsersController : ControllerBase
     {
 
@@ -23,6 +27,7 @@ namespace Expense_Tracker.Controllers
 
         // GET: api/Users
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetUsers()
         {
             var users = await _context.Users
@@ -44,6 +49,7 @@ namespace Expense_Tracker.Controllers
 
         // POST: api/Users
         [HttpPost]
+        [AllowAnonymous] 
         public async Task<IActionResult> CreateUser(UserDto dto)
         {
             var user = new User
@@ -51,6 +57,7 @@ namespace Expense_Tracker.Controllers
 
                 Name = dto.Name,
                 Email = dto.Email,
+                Role = "User",
                 PasswordHash = _passwordService.HashPassword(dto.Password),
                 CreatedAt = DateTime.UtcNow
             };
@@ -72,7 +79,11 @@ namespace Expense_Tracker.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var currentUserId = int.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == id && u.Id == currentUserId);
             if (user == null)
             {
                 return NotFound();
@@ -80,6 +91,7 @@ namespace Expense_Tracker.Controllers
 
             var userResponse = new UserResponseDto
             {
+                
                 Id = user.Id,
                 Name = user.Name,
                 Email = user.Email
@@ -92,7 +104,11 @@ namespace Expense_Tracker.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(int id, UserDto dto)
         {
-            var user = await _context.Users.FindAsync(id);
+            var currentUserId = int.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == id && u.Id == currentUserId);
             if (user == null)
             {
                 return NotFound();
@@ -118,7 +134,12 @@ namespace Expense_Tracker.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var currentUserId = int.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == id && u.Id == currentUserId);
+
             if (user == null)
             {
                 return NotFound();

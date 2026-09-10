@@ -60,6 +60,14 @@ namespace Expense_Tracker.Controllers
             var userId = int.Parse(
                 User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
+            var categoryExists = await _context.Categories
+                .AnyAsync(c => c.Id == dto.CategoryId);
+
+            if (!categoryExists)
+            {
+                return BadRequest("The specified category does not exist");
+            }
+
             var expense = new Expense
             {
                 UserId = userId,
@@ -69,6 +77,8 @@ namespace Expense_Tracker.Controllers
                 Date = dto.Date,
                 CreatedAt = DateTime.UtcNow
             };
+
+
 
             _context.Expenses.Add(expense);
             await _context.SaveChangesAsync();
@@ -142,6 +152,14 @@ namespace Expense_Tracker.Controllers
             if (expense == null)
             {
                 return NotFound();
+            }
+
+            var categoryExists = await _context.Categories
+                .AnyAsync(c => c.Id == dto.CategoryId);
+
+            if (!categoryExists)
+            {
+                return BadRequest("The specified category does not exist.");
             }
 
             expense.CategoryId = dto.CategoryId;
