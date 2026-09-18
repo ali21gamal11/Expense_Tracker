@@ -52,6 +52,14 @@ namespace Expense_Tracker.Controllers
         [AllowAnonymous] 
         public async Task<IActionResult> CreateUser(UserDto dto)
         {
+            var emailExists = await _context.Users
+               .AnyAsync(u => u.Email == dto.Email);
+
+            if (emailExists)
+            {
+                return Conflict("Email is already in use.");
+            
+            }
             var user = new User
             {
 
@@ -112,6 +120,14 @@ namespace Expense_Tracker.Controllers
             if (user == null)
             {
                 return NotFound();
+            }
+
+            var emailExists = await _context.Users
+                .AnyAsync(u => u.Email == dto.Email && u.Id != id);
+
+            if (emailExists)
+            {
+                return Conflict("Email is already in use.");
             }
 
             user.Name = dto.Name;

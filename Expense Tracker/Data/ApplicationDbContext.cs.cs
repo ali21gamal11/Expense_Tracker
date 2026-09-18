@@ -16,6 +16,10 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Expense>()
             .Property(e => e.Amount)
             .HasPrecision(18, 2);
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Email)
+            .IsUnique();
     }
 
 }

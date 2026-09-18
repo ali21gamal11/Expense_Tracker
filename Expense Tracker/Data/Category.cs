@@ -1,8 +1,13 @@
-﻿namespace Expense_Tracker.Data
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Expense_Tracker.Data
 {
     public class Category
     {
         public int Id { get; set; }
+
+        [Required]
+        [StringLength(100)]
         public string Name { get; set; }
     }
 }
